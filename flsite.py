@@ -19,7 +19,8 @@ menu = [{"name": "KNN", "url": "p_knn"},
 
 
 def classification_model_metrics(model: str) -> dict:
-    models = {"knn": KNeighborsClassifier(), "logistic_regression": LogisticRegression(), "tree": DecisionTreeClassifier()}
+    models = {"knn": KNeighborsClassifier(), "logistic_regression": LogisticRegression(),
+              "tree": DecisionTreeClassifier(criterion='entropy')}
     students_df = pd.read_excel('model/dataset_students.xlsx')
     students_df.drop_duplicates(inplace=True)
     label_encoder = LabelEncoder()
@@ -36,6 +37,12 @@ def classification_model_metrics(model: str) -> dict:
     return {"accuracy": accuracy, "precision": precision, "recall": recall}
 
 
+def make_df(elem1, elem2, elem3) -> pd.DataFrame:
+    return pd.DataFrame({"Средний балл": [float(elem1)],
+                         "Посещено лекций": [float(elem2), ],
+                         "Выполнено ДЗ": [float(elem3)]})
+
+
 @app.route("/")
 def index():
     return render_template('index.html', title="Лабораторные работы, выполненные ФИО", menu=menu)
@@ -48,12 +55,11 @@ def f_lab1():
     if request.method == 'POST':
         metrics = classification_model_metrics("knn")
         loaded_model_knn = pickle.load(open('model/knn.bin', 'rb'))
-        df = pd.DataFrame({"Средний балл": [float(request.form['list1'])],
-                           "Посещено лекций": [float(request.form['list2']), ],
-                           "Выполнено ДЗ": [float(request.form['list3'])]})
+        df = make_df(request.form['list1'], request.form['list2'], request.form['list3'])
         pred = loaded_model_knn.predict(df)
         return render_template('lab1.html', title="Метод k -ближайших соседей (KNN)", menu=menu,
-                               class_model="Экзамен сдан" if pred[0] else "Экзамен не сдан", accuracy=metrics['accuracy'],
+                               class_model="Экзамен сдан" if pred[0] else "Экзамен не сдан",
+                               accuracy=metrics['accuracy'],
                                precision=metrics['precision'], recall=metrics['recall'])
 
 
@@ -64,18 +70,27 @@ def f_lab2():
     if request.method == 'POST':
         metrics = classification_model_metrics('logistic_regression')
         logistic_regression = pickle.load(open('model/logistic_regression.bin', 'rb'))
-        df = pd.DataFrame({"Средний балл": [float(request.form['list1'])],
-                           "Посещено лекций": [float(request.form['list2']), ],
-                           "Выполнено ДЗ": [float(request.form['list3'])]})
+        df = make_df(request.form['list1'], request.form['list2'], request.form['list3'])
         pred = logistic_regression.predict(df)
         return render_template('lab2.html', title="Логистическая регрессия", menu=menu,
-                               class_model="Экзамен сдан" if pred[0] else "Экзамен не сдан", accuracy=metrics['accuracy'],
+                               class_model="Экзамен сдан" if pred[0] else "Экзамен не сдан",
+                               accuracy=metrics['accuracy'],
                                precision=metrics['precision'], recall=metrics['recall'])
 
 
-@app.route("/p_decision_tree")
+@app.route("/p_decision_tree", methods=['POST', 'GET'])
 def f_lab3():
-    return render_template('lab3.html', title="Дерево решений", menu=menu)
+    if request.method == 'GET':
+        return render_template('lab3.html', title="Дерево решений", menu=menu, class_model='')
+    if request.method == 'POST':
+        metrics = classification_model_metrics('tree')
+        logistic_regression = pickle.load(open('model/tree.bin', 'rb'))
+        df = make_df(request.form['list1'], request.form['list2'], request.form['list3'])
+        pred = logistic_regression.predict(df)
+        return render_template('lab3.html', title="Дерево решений", menu=menu,
+                               class_model="Экзамен сдан" if pred[0] else "Экзамен не сдан",
+                               accuracy=metrics['accuracy'],
+                               precision=metrics['precision'], recall=metrics['recall'])
 
 
 @app.route("/p_linear_regression")

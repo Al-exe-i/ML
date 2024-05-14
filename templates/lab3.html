@@ -2,5 +2,17 @@
  
 {% block content %}
 {{ super() }}
-<p>Логистическая регрессия для классификации Ирисов
+    <p>Дерево решений</p>
+    <form action="/p_decision_tree" method="POST">
+        <p><input type="text" class="form_text" name="list1"> Средний балл</p>
+        <p><input name="list2" class="form_text" type="text"> Посещено лекций</p>
+        <p><input name="list3" class="form_text" type="text"> Выполнено ДЗ</p>
+        <input type="submit" class="form_btn" value="Узнать результат экзамена">
+        <h1>{{class_model}}</h1>
+        {% if accuracy and recall and precision %}
+            <p>Accuracy: {{ accuracy }}</p>
+            <p>Precision: {{ precision }}</p>
+            <p>Recall: {{ recall }}</p>
+        {% endif %}
+    </form>
 {% endblock %}
