@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+ 
+{% block content %}
+{{ super() }}
+    <p>Линейная регрессия</p>
+    <form action="/p_linear_regression" method="POST">
+        <p><input type="text" class="form_text" name="list1"> Рост</p>
+        <p><input name="list2" class="form_text" type="text"> Вес</p>
+        <label for="list3">Пол</label>
+        <select name="list3">
+            <option value="0">Женский</option>
+            <option value="1">Мужской</option>
+        </select>
+        <br><br>
+        <input type="submit" class="form_btn" value="Узнать размер обуви">
+        {% if class_model %}
+            <h1>Размер обуви: {{class_model}}</h1>
+        {% endif %}
+        {% if mae and mse and r_2 %}
+            <p>MAE: {{ mae }}</p>
+            <p>MSE: {{ mse }}</p>
+            <p>r^2: {{ r_2 }}</p>
+        {% endif %}
+    </form>
+{% endblock %}
