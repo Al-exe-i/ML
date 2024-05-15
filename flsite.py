@@ -47,7 +47,7 @@ def make_df(elem1, elem2, elem3) -> pd.DataFrame:
 
 @app.route("/")
 def index():
-    return render_template('index.html', title="Лабораторные работы, выполненные ФИО", menu=menu)
+    return render_template('index.html', title="Машинное обучение. Мишин Алексей ИСТ-201", menu=menu)
 
 
 @app.route("/p_knn", methods=['POST', 'GET'])
@@ -122,7 +122,7 @@ def f_lab4():
                                mse=mse, r_2=r_2)
 
 
-@app.route("/api", methods=['GET'])
+@app.route("/api", methods=['GET', 'POST'])
 def api():
     try:
         request_data = request.get_json()
