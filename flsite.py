@@ -1,8 +1,9 @@
 import pickle
 import numpy as np
-from flask import Flask, render_template, url_for, request
+from flask import Flask, render_template, url_for, request, jsonify
 import pandas as pd
-from sklearn.metrics import accuracy_score, precision_score, recall_score, mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, mean_squared_error, mean_absolute_error
+from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
@@ -119,6 +120,58 @@ def f_lab4():
                                class_model=round(pred[0]),
                                mae=mae,
                                mse=mse, r_2=r_2)
+
+
+@app.route("/api", methods=['GET'])
+def api():
+    try:
+        request_data = request.get_json()
+        model_type = request_data['model']
+    except ValueError as e:
+        return jsonify(status='error', message=str(e))
+    except Exception as e:
+        return jsonify(status='Unknown error', message=str(e))
+    if model_type == 'linear_regression':
+        try:
+            height = request_data['height']
+            weight = request_data['weight']
+            gender = request_data['gender']
+            linear_regression = pickle.load(open('model/linear.bin', 'rb'))
+            pred = linear_regression.predict([[float(height), float(weight), float(gender)]])
+            return jsonify(size=round(pred[0]))
+        except ValueError as e:
+            return jsonify(status='error', message=str(e))
+        except Exception as e:
+            return jsonify(status='Unknown error', message=str(e))
+    else:
+        try:
+            av_score = request_data['score']
+            lectures = request_data['lectures']
+            homeworks = request_data['homeworks']
+        except ValueError as e:
+            return jsonify(status='error', message=str(e))
+        except Exception as e:
+            return jsonify(status='unknown error', message=str(e))
+        try:
+            if model_type == 'knn':
+                loaded_model_knn = pickle.load(open('model/knn.bin', 'rb'))
+                df = make_df(av_score, lectures, homeworks)
+                pred = loaded_model_knn.predict(df)
+                return jsonify(result="Экзамен сдан" if pred[0] else "Экзамен не сдан")
+            elif model_type == 'logistic_regression':
+                loaded_model_knn = pickle.load(open('model/logistic_regression.bin', 'rb'))
+                df = make_df(av_score, lectures, homeworks)
+                pred = loaded_model_knn.predict(df)
+                return jsonify(result="Экзамен сдан" if pred[0] else "Экзамен не сдан")
+            elif model_type == 'decision_tree':
+                loaded_model_knn = pickle.load(open('model/knn.bin', 'rb'))
+                df = make_df(av_score, lectures, homeworks)
+                pred = loaded_model_knn.predict(df)
+                return jsonify(result="Экзамен сдан" if pred[0] else "Экзамен не сдан")
+        except ValueError as e:
+            return jsonify(status='error', message=str(e))
+        except Exception as e:
+            return jsonify(status="unknown error", message=str(e))
 
 
 if __name__ == "__main__":
