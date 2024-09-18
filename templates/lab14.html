@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+ 
+{% block content %}
+{{ super() }}
+<p>Нейрон для классификации аудиторий
+<form action="/p_neural_network" method="POST">
+    <p><input type="text" class="form_text" name="list1"> Длина аудитории</p>
+    <p><input name="list2" class="form_text" type="text"> Ширина аудитории</p>
+    <p><input name="list3" class="form_text" type="text"> Кол-во компьютеров в аудитории</p>
+    <input type="submit" class="form_btn" value="Узнать тип аудитории">
+    {% if class_model%}
+        <h1>{{class_model}}</h1>
+    {% endif %}
+</form>
+
+{% endblock %}

@@ -10,6 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LinearRegression
+from model.neuro import SingleNeuron
 
 app = Flask(__name__)
 
@@ -17,7 +18,11 @@ menu = [{"name": "KNN", "url": "p_knn"},
         {"name": "Логистическая регрессия", "url": "p_logistic_regression"},
         {"name": "Дерево решений", "url": "p_decision_tree"},
         {"name": "Линейная регрессия", "url": "p_linear_regression"},
+        {"name": "Нейронка", "url": "p_neural_network"},
         ]
+
+new_neuron = SingleNeuron(input_size=3)
+new_neuron.load_weights('model/neuron_weights.txt')
 
 
 def classification_model_metrics(model: str) -> dict:
@@ -121,6 +126,19 @@ def f_lab4():
                                mae=mae,
                                mse=mse, r_2=r_2)
 
+
+@app.route("/p_neural_network", methods=["GET", "POST"])
+def p_neural_network():
+    if request.method == "GET":
+        return render_template('lab14.html', title="Нейрон", menu=menu, class_model='')
+    if request.method == "POST":
+        X_new = np.array([[float(request.form['list1']),
+                           float(request.form['list2']),
+                           float(request.form['list3'])]])
+        predictions = new_neuron.forward(X_new)
+        print("Предсказанные значения:", predictions, *np.where(predictions >= 0.5, 'п', 'л'))
+        return render_template('lab14.html', title="Нейрон", menu=menu,
+                               class_model="Это: " + str(*np.where(predictions >= 0.5, 'практическая аудитория', 'лекционная аудитория')))
 
 @app.route("/api", methods=['GET', 'POST'])
 def api():
