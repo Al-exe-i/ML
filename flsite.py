@@ -52,7 +52,7 @@ def make_df(elem1, elem2, elem3) -> pd.DataFrame:
 
 @app.route("/")
 def index():
-    return render_template('index.html', title="Машинное обучение. Мишин Алексей ИСТ-201", menu=menu)
+    return render_template('index.html', title="Машинное обучение. Мишин Алексей ИСТ-301", menu=menu)
 
 
 @app.route("/p_knn", methods=['POST', 'GET'])
@@ -138,7 +138,9 @@ def p_neural_network():
         predictions = new_neuron.forward(X_new)
         print("Предсказанные значения:", predictions, *np.where(predictions >= 0.5, 'п', 'л'))
         return render_template('lab14.html', title="Нейрон", menu=menu,
-                               class_model="Это: " + str(*np.where(predictions >= 0.5, 'практическая аудитория', 'лекционная аудитория')))
+                               class_model="Это: " + str(
+                                   *np.where(predictions >= 0.5, 'практическая аудитория', 'лекционная аудитория')))
+
 
 @app.route("/api", methods=['GET', 'POST'])
 def api():

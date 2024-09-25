@@ -1,7 +1,4 @@
-import numpy as np
 from neuro import SingleNeuron
-
-
 import numpy as np
 
 # Обновленные входные данные
