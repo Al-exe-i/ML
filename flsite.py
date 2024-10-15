@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LinearRegression
 from model.neuro import SingleNeuron
+import tensorflow as tf
 
 app = Flask(__name__)
 
@@ -23,6 +24,7 @@ menu = [{"name": "KNN", "url": "p_knn"},
 
 new_neuron = SingleNeuron(input_size=3)
 new_neuron.load_weights('model/neuron_weights.txt')
+model = tf.keras.models.load_model('model/regression.h5')
 
 
 def classification_model_metrics(model: str) -> dict:
@@ -192,6 +194,16 @@ def api():
             return jsonify(status='error', message=str(e))
         except Exception as e:
             return jsonify(status="unknown error", message=str(e))
+
+
+@app.route('/api/v1')
+def api_v1():
+    if request.method == 'GET':
+        height = float(request.args.get('height'))
+        weight = float(request.args.get('weight'))
+        gender = float(request.args.get('gender'))
+        result = model.predict(np.array([[height, weight, gender]]))[0][0]
+        return jsonify(size=round(result))
 
 
 if __name__ == "__main__":
