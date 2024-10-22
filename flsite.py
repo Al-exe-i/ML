@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from flask import Flask, render_template, url_for, request, jsonify
+from flask import Flask, render_template, url_for, request, jsonify, redirect
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, mean_squared_error, mean_absolute_error
 from sklearn.metrics import r2_score
@@ -12,6 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LinearRegression
 from model.neuro import SingleNeuron
 import tensorflow as tf
+from tensorflow.keras.preprocessing import image
 
 app = Flask(__name__)
 
@@ -20,11 +21,13 @@ menu = [{"name": "KNN", "url": "p_knn"},
         {"name": "Дерево решений", "url": "p_decision_tree"},
         {"name": "Линейная регрессия", "url": "p_linear_regression"},
         {"name": "Нейронка", "url": "p_neural_network"},
+        {"name": "Нейронка для одежды", "url": 'clothes_neural'},
         ]
 
 new_neuron = SingleNeuron(input_size=3)
 new_neuron.load_weights('model/neuron_weights.txt')
 model = tf.keras.models.load_model('model/regression.h5')
+clothes_model = tf.keras.models.load_model('model/clothes_model.h5')
 
 
 def classification_model_metrics(model: str) -> dict:
@@ -204,6 +207,35 @@ def api_v1():
         gender = float(request.args.get('gender'))
         result = model.predict(np.array([[height, weight, gender]]))[0][0]
         return jsonify(size=round(result))
+
+
+def load_and_preprocess_image(img_path):
+    img = image.load_img(img_path, target_size=(28, 28), color_mode='grayscale')  # Загружаем изображение
+    img_array = image.img_to_array(img)  # Преобразуем изображение в массив
+    img_array = img_array / 255.0  # Нормализуем
+    img_array = np.expand_dims(img_array, axis=0)  # Добавляем размерность
+    return img_array
+
+
+@app.route('/clothes_neural', methods=['GET', 'POST'])
+def clothes_neural():
+    if request.method == 'GET':
+        return render_template('lab17.html', menu=menu, title="Нейронная сеть", post_url=url_for('clothes_neural'))
+    elif request.method == 'POST':
+        file = request.files['image']
+        if file:
+            class_names = [
+                'Футболка/Топ', 'Брюки', 'Свитер', 'Платье', 'Пальто',
+                'Сандалии', 'Рубашка', 'Кроссовки', 'Сумка', 'Ботинки'
+            ]
+            filename = file.filename
+            file.save(f'{filename}')
+            prepared_image = load_and_preprocess_image(f'{filename}')
+            predictions = clothes_model.predict(prepared_image)
+            predicted_class = class_names[predictions[0].argmax()]
+            return render_template('lab17.html', predicted_class=predicted_class, menu=menu, title="Нейронная сеть")
+        else:
+            return redirect(url_for('clothes_neural'))
 
 
 if __name__ == "__main__":
