@@ -1,3 +1,4 @@
+import os
 import pickle
 import numpy as np
 from flask import Flask, render_template, url_for, request, jsonify, redirect
@@ -212,7 +213,7 @@ def api_v1():
 def load_and_preprocess_image(img_path):
     img = image.load_img(img_path, target_size=(28, 28), color_mode='grayscale')  # Загружаем изображение
     img_array = image.img_to_array(img)  # Преобразуем изображение в массив
-    img_array = img_array / 255.0  # Нормализуем
+    img_array = 255 - img_array  # Нормализуем
     img_array = np.expand_dims(img_array, axis=0)  # Добавляем размерность
     return img_array
 
@@ -225,7 +226,7 @@ def clothes_neural():
         file = request.files['image']
         if file:
             class_names = [
-                'Футболка/Топ', 'Брюки', 'Свитер', 'Платье', 'Пальто',
+                'Футболка', 'Брюки', 'Свитер', 'Платье', 'Пальто',
                 'Сандалии', 'Рубашка', 'Кроссовки', 'Сумка', 'Ботинки'
             ]
             filename = file.filename
@@ -233,6 +234,7 @@ def clothes_neural():
             prepared_image = load_and_preprocess_image(f'{filename}')
             predictions = clothes_model.predict(prepared_image)
             predicted_class = class_names[predictions[0].argmax()]
+            os.remove(filename)
             return render_template('lab17.html', predicted_class=predicted_class, menu=menu, title="Нейронная сеть")
         else:
             return redirect(url_for('clothes_neural'))
