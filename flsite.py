@@ -17,18 +17,26 @@ from tensorflow.keras.preprocessing import image
 
 app = Flask(__name__)
 
-menu = [{"name": "KNN", "url": "p_knn"},
-        {"name": "Логистическая регрессия", "url": "p_logistic_regression"},
-        {"name": "Дерево решений", "url": "p_decision_tree"},
-        {"name": "Линейная регрессия", "url": "p_linear_regression"},
+# menu = [{"name": "KNN", "url": "p_knn"},
+#         {"name": "Логистическая регрессия", "url": "p_logistic_regression"},
+#         {"name": "Дерево решений", "url": "p_decision_tree"},
+#         {"name": "Линейная регрессия", "url": "p_linear_regression"},
+#         {"name": "Нейронка", "url": "p_neural_network"},
+#         {"name": "Нейронка для одежды", "url": 'clothes_neural'},
+#         {"name": "Классификация телефонов", "url": 'phones_cnn'},
+#         ]
+
+menu = [
         {"name": "Нейронка", "url": "p_neural_network"},
         {"name": "Нейронка для одежды", "url": 'clothes_neural'},
+        {"name": "Классификация телефонов", "url": 'phones_cnn'},
         ]
 
 new_neuron = SingleNeuron(input_size=3)
 new_neuron.load_weights('model/neuron_weights.txt')
 model = tf.keras.models.load_model('model/regression.h5')
 clothes_model = tf.keras.models.load_model('model/clothes_model.h5')
+cnn_phones_model = tf.keras.models.load_model('model/phones_cnn.h5')
 
 
 def classification_model_metrics(model: str) -> dict:
@@ -238,6 +246,31 @@ def clothes_neural():
             return render_template('lab17.html', predicted_class=predicted_class, menu=menu, title="Нейронная сеть")
         else:
             return redirect(url_for('clothes_neural'))
+
+
+@app.route('/phones_cnn', methods=['Get', 'POST'])
+def phones_cnn():
+    if request.method == 'GET':
+        return render_template('lab19.html', menu=menu, title="Нейронная сеть", post_url=url_for('phones_cnn'))
+    elif request.method == 'POST':
+        file = request.files['image']
+        img_height = 180
+        img_width = 180
+        if file:
+            class_names = ['кнопочный телефон', 'смартфон']
+            filename = file.filename
+            file.save(f'{filename}')
+            img = tf.keras.utils.load_img(filename, target_size=(img_height, img_width))
+            img_array = tf.keras.utils.img_to_array(img)
+            img_array = tf.expand_dims(img_array, 0)  # Create a batch
+            predictions = cnn_phones_model.predict(img_array)
+            score = tf.nn.softmax(predictions[0])
+            predicted_class = class_names[np.argmax(score)]
+            os.remove(filename)
+            return render_template('lab19.html', predicted_class=predicted_class, menu=menu, title="Нейронная сеть",
+                                   percent=round(np.max(score) * 100, 1))
+        else:
+            return redirect(url_for('phones_cnn'))
 
 
 if __name__ == "__main__":
