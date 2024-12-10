@@ -30,6 +30,7 @@ menu = [
         {"name": "Нейронка", "url": "p_neural_network"},
         {"name": "Нейронка для одежды", "url": 'clothes_neural'},
         {"name": "Классификация телефонов", "url": 'phones_cnn'},
+        {"name": "Классификация телефонов VGG16", "url": 'phones_cnn_transfer'},
         ]
 
 new_neuron = SingleNeuron(input_size=3)
@@ -37,6 +38,7 @@ new_neuron.load_weights('model/neuron_weights.txt')
 model = tf.keras.models.load_model('model/regression.h5')
 clothes_model = tf.keras.models.load_model('model/clothes_model.h5')
 cnn_phones_model = tf.keras.models.load_model('model/phones_cnn.h5')
+cnn_transfer_phones_model = tf.keras.models.load_model('model/phones_cnn_transfer.keras')
 
 
 def classification_model_metrics(model: str) -> dict:
@@ -271,6 +273,32 @@ def phones_cnn():
                                    percent=round(np.max(score) * 100, 1))
         else:
             return redirect(url_for('phones_cnn'))
+
+
+@app.route('/phones_cnn_transfer', methods=['Get', 'POST'])
+def phones_cnn_transfer():
+    if request.method == 'GET':
+        return render_template('lab20.html', menu=menu, title="Нейронная сеть", post_url=url_for('phones_cnn_transfer'))
+    elif request.method == 'POST':
+        file = request.files['image']
+        if file:
+            class_names = ['кнопочный телефон', 'смартфон']
+            filename = file.filename
+            file.save(f'{filename}')
+            img = tf.keras.utils.load_img(
+                filename, target_size=(160, 160)
+            )
+            img_array = tf.keras.utils.img_to_array(img)
+            img_array = tf.expand_dims(img_array, 0)  # Create a batch
+            predictions = cnn_transfer_phones_model.predict_on_batch(img_array)
+            predictions = cnn_transfer_phones_model.predict_on_batch(img_array).flatten()
+            predictions = tf.nn.sigmoid(predictions)
+            predictions = tf.where(predictions < 0.6, 0, 1)
+            os.remove(filename)
+            predicted_class = class_names[int(predictions)]
+            return render_template('lab20.html', predicted_class=predicted_class, menu=menu, title="Нейронная сеть")
+        else:
+            return redirect(url_for('phones_cnn_transfer'))
 
 
 if __name__ == "__main__":
